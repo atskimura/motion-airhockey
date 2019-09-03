@@ -27,19 +27,6 @@
     const engine = Engine.create();
     game.engine = engine;
 
-    // レンダラの作成
-    // const render = Render.create({
-    //   element: document.getElementById('game'),
-    //   engine: engine,
-    //   options: {
-    //     width: BOARD_WIDTH,
-    //     height: BOARD_HEIGHT,
-    //     wireframes: false,
-    //     background: BORAD_COLOR,
-    //   },
-    // });
-    // Render.run(render);
-
     // 重力はOFF
     engine.world.gravity.y = 0;
     
@@ -111,7 +98,6 @@
       const h = b.bounds.max.y - b.bounds.min.y;
 
       const material = new THREE.MeshToonMaterial({color: b.render.fillStyle});
-      console.log(b);
 
       if (b.isStatic) {
         const geometry = new THREE.BoxGeometry(w, h, 30);
@@ -269,7 +255,6 @@
   /**
    * 矢印キーによるパドルの移動
    * 左手前を原点としたときの力のベクトルを返す
-   * @param {*} game 
    */
   function calcForceByKey() {
     const f = 0.5;

@@ -14,6 +14,8 @@ body {
 }
 .sidepanel {
   flex: 1;
+}
+.scoreBoard {
   display: flex;
   justify-content: center;
   align-items: center;

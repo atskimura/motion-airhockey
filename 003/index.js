@@ -172,7 +172,6 @@
   /**
    * 矢印キーによるパドルの移動
    * 左手前を原点としたときの力のベクトルを返す
-   * @param {*} game 
    */
   function calcForceByKey() {
     const f = 0.5;

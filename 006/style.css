@@ -50,3 +50,12 @@ body {
 .scoreCard {
   border: 1px solid #888;
 }
+.webcam {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 0;
+}
+#webcamCanvas {
+  transform: rotateY(180deg);
+}

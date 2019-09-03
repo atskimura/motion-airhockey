@@ -6,6 +6,8 @@
   const PADDLE_A_COLOR = '#64DB8F';
   const PADDLE_B_COLOR = '#55A5FF';
   const PUCK_COLOR = '#E66C4F';
+  const WEBCAM_WIDTH = 480;
+  const WEBCAM_HEIGHT = 320;
 
   const Engine = Matter.Engine;
   const Render = Matter.Render;
@@ -17,6 +19,71 @@
   let game = {};
 
   function init() {
+    const webcamCanvas = document.getElementById("webcamCanvas");
+    const webcamCtx = webcamCanvas.getContext("2d");
+    game.webcamCtx = webcamCtx;
+    const video = document.getElementById('video');
+
+    navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+    .then(function (mediaStream) {
+      // videoタグのsrcObjectにセット
+      video.srcObject = mediaStream;
+      video.onloadedmetadata = function (e) {
+        video.play();
+      };
+
+      return posenet.load();
+    })
+    .then(net => {
+      document.getElementById("loading-indicator").style.display = 'none';
+      setInterval(function () { detectAndDraw(net); }, 100);
+      initGame();
+    });
+  }
+
+  function detectAndDraw(net) {
+    game.webcamCtx.drawImage(video, 0, 0, WEBCAM_WIDTH, WEBCAM_HEIGHT);
+
+    net.estimateSinglePose(video, {
+      flipHorizontal: false
+    })
+    .then(function(pose) {
+      drawKeypoints(pose);
+    });
+  }
+
+  function drawKeypoints(pose) {
+    const webcamCtx = game.webcamCtx;
+    pose.keypoints.forEach(keypoint => {
+      if (keypoint.part == 'nose') {
+        if (keypoint.score > 0.2) {
+          game.nosePosition = keypoint.position;
+        } else {
+          game.nosePosition = null;
+        }
+      }
+      if (keypoint.score > 0.2) {
+        webcamCtx.beginPath();
+        webcamCtx.fillStyle = "rgb(255, 255, 0)"; // 黄色
+        webcamCtx.arc(
+          keypoint.position.x,
+          keypoint.position.y,
+          5,
+          (10 * Math.PI) / 180,
+          (80 * Math.PI) / 180,
+          true
+        );
+        webcamCtx.fill();
+        webcamCtx.fillText(
+          keypoint.part,
+          keypoint.position.x,
+          keypoint.position.y + 10
+        );
+      }
+    });
+  }
+
+  function initGame() {
     // スコア情報の初期化
     game.score = {
       A: { point: 0, el: document.querySelector('#scoreA .score')},
@@ -27,24 +94,17 @@
     const engine = Engine.create();
     game.engine = engine;
 
-    // レンダラの作成
-    const render = Render.create({
-      element: document.getElementById('game'),
-      engine: engine,
-      options: {
-        width: BOARD_WIDTH,
-        height: BOARD_HEIGHT,
-        wireframes: false,
-        background: BORAD_COLOR,
-      },
-    });
-    Render.run(render);
-
     // 重力はOFF
     engine.world.gravity.y = 0;
-
+    
     // Matter.jsのオブジェクトを作成
     createBodies();
+
+    // Three.jsの初期化
+    initThreeJS();
+
+    // Three.jsのメッシュ作成
+    createMeshes();
 
     // 押下されているキーを管理
     watchKeyboard();
@@ -55,6 +115,76 @@
     // エンジン実行
     Engine.run(engine);
   };
+
+  /**
+   * Three.jsの初期化
+   */
+  function initThreeJS() {
+    // Three.jsのレンダラ作成
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    game.renderer = renderer;
+    renderer.setSize(BOARD_HEIGHT, BOARD_WIDTH);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(parseInt(`0x${BORAD_COLOR.substr(1)}`));
+    document.getElementById('game').appendChild(renderer.domElement);
+
+    // Three.jsのカメラ作成
+    let camera = new THREE.PerspectiveCamera(50, BOARD_HEIGHT / BOARD_WIDTH, 1, 3000);
+    game.camera = camera;
+    camera.position.x = 0;
+    camera.position.y = -650;
+    camera.position.z = 300;
+    // 原点付近にカメラを向ける
+    camera.lookAt(0, 0, -150);
+
+    // シーンの作成
+    const scene = new THREE.Scene();
+    game.scene = scene;
+
+    // ライト追加
+    dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(0, 30, 40);
+    scene.add(dirLight);
+  }
+
+  /**
+   * Matter.jsのボディからThree.jsのメッシュ作成
+   */
+  function createMeshes() {
+    const bodies = game.engine.world.bodies;
+
+    // Matter.jsのボディからThree.jsのMeshを作成
+    let meshes = [];
+    game.meshes = meshes;
+    let group = new THREE.Object3D();
+    game.scene.add(group);
+    bodies.forEach((b) => {
+      const w = b.bounds.max.x - b.bounds.min.x;
+      const h = b.bounds.max.y - b.bounds.min.y;
+
+      const material = new THREE.MeshToonMaterial({color: b.render.fillStyle});
+
+      if (b.isStatic) {
+        const geometry = new THREE.BoxGeometry(w, h, 30);
+        m = new THREE.Mesh(geometry, material);
+      } else {
+        const geometry = new THREE.CylinderGeometry(w/2, w/2, 20, 32);
+        m = new THREE.Mesh(geometry, material);
+        m.rotation.x = Math.PI / 2;
+      }
+
+      group.add(m);
+      meshes.push(m);
+    });
+
+    // ゲーム盤は2Dのときは存在しないので作成
+    var material = new THREE.MeshPhongMaterial({color: BORAD_COLOR});
+    var m = new THREE.Mesh(new THREE.BoxGeometry(BOARD_WIDTH, BOARD_HEIGHT, 10), material);
+    m.position.z = -15;
+    group.add(m);
+  }
 
   /**
    * Matter.jsのボディモデルを作成
@@ -127,6 +257,20 @@
     updatePaddleA();
     updatePaddleB();
     updatePuck();
+    updateThreeJS();
+  }
+
+  /**
+   * Matter.jsのボディの位置にThree.jsのメッシュの位置に移動する。
+   */
+  function updateThreeJS() {
+    const bodies = game.engine.world.bodies;
+    bodies.forEach((b, i) => {
+      const p = b.position;
+      game.meshes[i].position.set(p.x - BOARD_WIDTH/2, -(p.y - BOARD_HEIGHT/2), 0)
+    })
+
+    game.renderer.render(game.scene, game.camera);
   }
 
   /**
@@ -150,10 +294,41 @@
       y: -paddleA.position.y + h,
     };
 
+    // 鼻でパドルを操作
+    const relNoseForce = calcForceByNose(paddleRelPos);
+    if (relNoseForce) {
+      Body.applyForce(paddleA, paddleA.position, {x: relNoseForce.x, y: -relNoseForce.y});
+    }
+
     // パドルを自陣にキープする
     const relKeepForce = keepPaddleOwnSide(paddleRelPos);
     if (relKeepForce) {
       Body.applyForce(paddleA, paddleA.position, {x: relKeepForce.x, y: -relKeepForce.y});
+    }
+  }
+
+  /**
+   * 鼻によるパドルの移動
+   * @param {x:int, y:int} paddlePos 左手前を原点としたパドルの座標
+   * @return {x:int, y:int} force 左手前を原点とした力のベクトル
+   */
+  function calcForceByNose(paddlePos) {
+    const f = 0.8;
+    const minm = 5; // 動き出す最小の大きさ
+    if (game.nosePosition) {
+      // 鼻の座標をゲーム盤の左手前を原点とした座標に変換
+      // Webカメラの画面をゲーム盤半面にマッピング
+      const x = (-game.nosePosition.x + WEBCAM_WIDTH) * BOARD_WIDTH / WEBCAM_WIDTH;
+      const y = (-game.nosePosition.y + WEBCAM_HEIGHT) * BOARD_HEIGHT / 2 / WEBCAM_HEIGHT;
+      let force = {
+        x: x - paddlePos.x,
+        y: y - paddlePos.y,
+      };
+      if (Matter.Vector.magnitude(force) > minm) {
+        // 常にだいたい同じ大きさの力を加える
+        force = Matter.Vector.normalise(force);
+        return {x: force.x * f, y: force.y * f};
+      }
     }
   }
 
