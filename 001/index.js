@@ -37,7 +37,7 @@
     // 重力はOFF
     engine.world.gravity.y = 0;
 
-    // Matter.jsのオブジェクトを作成
+    // Matter.jsのリジッドボディを作成
     createBodies();
 
     // エンジン実行
@@ -45,7 +45,7 @@
   };
 
   /**
-   * Matter.jsのボディモデルを作成
+   * Matter.jsのリジッドボディを作成
    */
   function createBodies() {
     const w = BOARD_WIDTH;

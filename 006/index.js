@@ -97,7 +97,7 @@
     // 重力はOFF
     engine.world.gravity.y = 0;
     
-    // Matter.jsのオブジェクトを作成
+    // Matter.jsのリジッドボディを作成
     createBodies();
 
     // Three.jsの初期化
@@ -150,12 +150,12 @@
   }
 
   /**
-   * Matter.jsのボディからThree.jsのメッシュ作成
+   * Matter.jsのリジッドボディからThree.jsのメッシュ作成
    */
   function createMeshes() {
     const bodies = game.engine.world.bodies;
 
-    // Matter.jsのボディからThree.jsのMeshを作成
+    // Matter.jsのリジッドボディからThree.jsのMeshを作成
     let meshes = [];
     game.meshes = meshes;
     let group = new THREE.Object3D();
@@ -187,7 +187,7 @@
   }
 
   /**
-   * Matter.jsのボディモデルを作成
+   * Matter.jsのリジッドボディを作成
    */
   function createBodies() {
     const w = BOARD_WIDTH;
@@ -261,7 +261,7 @@
   }
 
   /**
-   * Matter.jsのボディの位置にThree.jsのメッシュの位置に移動する。
+   * Matter.jsのリジッドボディの位置にThree.jsのメッシュの位置に移動する。
    */
   function updateThreeJS() {
     const bodies = game.engine.world.bodies;
