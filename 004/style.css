@@ -1,0 +1,52 @@
+body {
+  background: #222;
+  color: #444;
+  margin: 20px;
+}
+.container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.game {
+  flex: 1;
+  text-align: center;
+}
+.sidepanel {
+  flex: 1;
+}
+.scoreBoard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 0;
+}
+.score {
+  padding: 20px;
+  display: block;
+  width: 150px;
+  text-align: center;
+  font-size: 60px;
+  background: #333;
+  color: #FFF;
+}
+.scoreName {
+  color: #FFF;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 20px;
+}
+#scoreA .scoreName {
+  background: #64DB8F;
+}
+#scoreB .scoreName {
+  background: #55A5FF;
+}
+.scoreVs{
+  color: #FFF;
+  font-size: 30px;
+  padding: 20px;
+}
+.scoreCard {
+  border: 1px solid #888;
+}

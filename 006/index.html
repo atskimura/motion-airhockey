@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>エアホッケー</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.14.2/build/matter.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.108.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
+    <script src="index.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="game" id="game"></div>
+      <div class="sidepanel">
+        <div class="scoreBoard">
+          <div class="scoreCard" id="scoreA">
+            <div class="scoreName">あなた</div>
+            <span class="score">0</span>
+          </div>
+          <div class="scoreVs">vs</div>
+          <div class="scoreCard" id="scoreB">
+            <div class="scoreName">コンピュータ</div>
+            <span class="score">0</span>
+          </div>
+        </div>
+        <div class="webcam">
+          <div id="loading-indicator">PoseNet model is loading.</div>
+          <canvas id="webcamCanvas" width="480" height="320"></canvas>
+          <video id="video" width="480" height="320" style="display:none;" autoplay playsinline>Video stream not available.</video>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
